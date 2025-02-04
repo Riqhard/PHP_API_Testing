@@ -1,14 +1,14 @@
 <?php
 // Replace these with actual values
 $secretKey = "1TRQVUMAUBX4";
-$stamp = "testtill";
+$stamp = "testittaja";
 $site = "77190";
 $amount = "4.30";
 $fee = "5.75";
 $vat_value = "6.0";
-$returnUrl = "https://yourwebsite.com/payment_confirm.php";
-$rejectUrl = "https://yourwebsite.com/payment_failed.php";
-$cancelUrl = "https://yourwebsite.com/payment_cancelled.php";
+$returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
+$rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_failed.php";
+$cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_cancelled.php";
 
 // Construct the MAC string based on available values
 if (!empty($fee) && !empty($vat_value)) {
