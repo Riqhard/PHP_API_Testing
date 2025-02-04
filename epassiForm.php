@@ -1,7 +1,7 @@
 <?php
 // Replace these with actual values
 $secretKey = "1TRQVUMAUBX4";
-$stamp = "test1234";
+$stamp = "testtill";
 $site = "77190";
 $amount = "4.30";
 $fee = "5.75";
