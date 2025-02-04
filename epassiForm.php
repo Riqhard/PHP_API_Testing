@@ -25,6 +25,19 @@ if (!empty($fee) && !empty($vat_value)) {
 $mac = hash("sha512", $dataString);
 // echo mac
 echo "Generated MAC: " . $mac;
+echo "<br>";
+echo "<br>";
+echo "STAMP: " . $stamp;
+echo "<br>";
+echo "SITE: " . $site;
+echo "<br>";
+echo "AMOUNT: " . $amount;
+echo "<br>";
+echo "FEE: " . $fee;
+echo "<br>";
+echo "VAT_VALUE: " . $vat_value;
+echo "<br>";
+
 
 ?>
 
