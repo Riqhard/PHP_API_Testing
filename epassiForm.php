@@ -32,11 +32,7 @@ echo "FORM: " . $form;
 
 // Replace these with actual values
 $secretKey = "1TRQVUMAUBX4";
-$stamp = "test12345";
-$site = "77190";
-$amount = "4.30";
-$fee = "5.75";
-$vat_value = "6.0";
+
 $returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";

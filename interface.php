@@ -41,15 +41,16 @@ if (TESTING) {
 
 # sha512 generator, returns hash
 function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") {
-  if (!empty($fee) && !empty($vatValue)) {
-      return hash('sha512', $stamp . $site . $amount . $fee . $vatValue . MAC);
-  } else if (!empty($fee)) {
-      return hash('sha512', $stamp . $site . $amount . $fee . MAC);
-  } else if (!empty($vatValue)) {
-      return hash('sha512', $stamp . $site . $amount . $vatValue . MAC);
-  } 
+    $mac = MAC;
+    if (!empty($fee) && !empty($vatValue)) {
+        return hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac");
+    } else if (!empty($fee)) {
+        return hash('sha512', "$stamp&$site&$amount&$fee&$mac");
+    } else if (!empty($vatValue)) {
+        return hash('sha512', "$stamp&$site&$amount&$vatValue&$mac");
+    } 
 
-  return hash('sha512', $stamp . $site . $amount . $macKey);
+  return hash('sha512', "$stamp&$site&$amount&$mac");
 } 
 
 
