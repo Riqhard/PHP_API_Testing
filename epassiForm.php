@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 
 $epassi_url = "https://prodstaging.Epassi.fi/e_payments/v2"; // Test environment
 // Replace these with actual values
@@ -26,6 +29,7 @@ if (!empty($fee) && !empty($vat_value)) {
 // Generate SHA-512 hash
 $mac = hash("sha512", $dataString);
 // echo mac
+/*
 echo "Generated MAC: " . $mac;
 echo "<br>";
 echo "<br>";
@@ -39,6 +43,8 @@ echo "FEE: " . $fee;
 echo "<br>";
 echo "VAT_VALUE: " . $vat_value;
 echo "<br>";
+*/
+
 
 // cURL request to Epassi API
 
