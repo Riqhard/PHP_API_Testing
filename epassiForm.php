@@ -1,7 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 
 $epassi_url = "https://prodstaging.Epassi.fi/e_payments/v2"; // Test environment
 // Replace these with actual values
@@ -29,7 +26,6 @@ if (!empty($fee) && !empty($vat_value)) {
 // Generate SHA-512 hash
 $mac = hash("sha512", $dataString);
 // echo mac
-/*
 echo "Generated MAC: " . $mac;
 echo "<br>";
 echo "<br>";
@@ -43,8 +39,6 @@ echo "FEE: " . $fee;
 echo "<br>";
 echo "VAT_VALUE: " . $vat_value;
 echo "<br>";
-*/
-
 
 // cURL request to Epassi API
 
@@ -60,9 +54,26 @@ $queryString = http_build_query([
     "RETURN" => $returnUrl,
     "MAC" => $mac
 ]);
-// Redirect user to Epassi payment page with parameters
-header("Location: $epassi_url?$queryString");
-exit();
+
+// Initialize cURL
+$ch = curl_init($epassi_url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification in testing
+
+// Execute the request
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+// Handle response
+if ($httpCode == 200) {
+    echo "Payment request sent successfully! Response: <br>";
+    echo nl2br(htmlspecialchars($response));
+} else {
+    echo "Error: Failed to send payment request. HTTP Code: $httpCode";
+}
 
 ?>
 
