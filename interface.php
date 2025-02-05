@@ -115,7 +115,7 @@ function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonT
     $form .= "<input type='hidden' name='CANCEL' value='" . CANCEL_URL . "'>";
     $form .= "<input type='hidden' name='RETURN' value='" . RETURN_URL . "'>";
     $form .= "<input type='hidden' name='MAC' value='" . generateSHA512($stamp, $site, $amount, $fee, $vatValue) . "'>";
-    $form .= "<input type='submit' value='" . $button_text . "'>";
+    $form .= "<input type='submit' value='" . $buttonText . "'>";
     $form .= "</form>";
     return $form;
 }

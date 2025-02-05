@@ -9,7 +9,7 @@ $fee = "5.0";
 $vat_value = "6.0";
 
 
-$form = generateEpassiForm($stamp, $site, $amount, $fee, $vat_value);
+$form = generateEpassiForm($stamp, $amount, $fee, $vat_value);
 
 
 
