@@ -52,7 +52,11 @@ if (!empty($fee) && !empty($vat_value)) {
  
 // Generate SHA-512 hash
 $mac = hash("sha512", $dataString);
-
+echo "Correct Mac: " . $mac;
+echo "<br>";
+echo "Correct Datastring: " . $dataString;
+echo "<br>";
+echo "Interface Mac" . generateSHA512($stamp, $site, $amount, $fee, $vat_value);
 ?>
 <br>
 <hr>

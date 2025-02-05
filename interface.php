@@ -42,18 +42,15 @@ if (TESTING) {
 # sha512 generator, returns hash
 function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") {
     $mac = MAC;
-    echo "Mac key is: " . $mac;
     if (!empty($fee) && !empty($vatValue)) {
-        echo "1";
+        echo "$stamp&$site&$amount&$fee&$vatValue&$mac";
+        echo "<br>";
         return hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac");
     } else if (!empty($fee)) {
-        echo "2";
         return hash('sha512', "$stamp&$site&$amount&$fee&$mac");
     } else if (!empty($vatValue)) {
-        echo "3";
         return hash('sha512', "$stamp&$site&$amount&$vatValue&$mac");
     } 
-    echo "4";
   return hash('sha512', "$stamp&$site&$amount&$mac");
 } 
 
