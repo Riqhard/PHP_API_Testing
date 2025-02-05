@@ -47,6 +47,8 @@ if (!empty($fee) && !empty($vat_value)) {
 } else {
     $dataString = "$stamp&$site&$amount&$secretKey";
 }
+
+
  
 // Generate SHA-512 hash
 $mac = hash("sha512", $dataString);
