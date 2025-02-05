@@ -6,7 +6,7 @@ $secretKey = "1TRQVUMAUBX4";
 $stamp = rand(1000, 65535);
 $site = "77190";
 $amount = "4.30";
-$fee = "5.75";
+$fee = "";
 $vat_value = "6.0";
 $returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
@@ -40,40 +40,7 @@ echo "<br>";
 echo "VAT_VALUE: " . $vat_value;
 echo "<br>";
 
-// cURL request to Epassi API
 
-// Prepare the POST data (as a query string)
-$queryString = http_build_query([
-    "STAMP" => $stamp,
-    "SITE" => $site,
-    "AMOUNT" => $amount,
-    "FEE" => $fee,
-    "VAT_VALUE" => $vat_value,
-    "REJECT" => $rejectUrl,
-    "CANCEL" => $cancelUrl,
-    "RETURN" => $returnUrl,
-    "MAC" => $mac
-]);
-
-// Initialize cURL
-$ch = curl_init($epassi_url);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification in testing
-
-// Execute the request
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-// Handle response
-if ($httpCode == 200) {
-    echo "Payment request sent successfully! Response: <br>";
-    echo nl2br(htmlspecialchars($response));
-} else {
-    echo "Error: Failed to send payment request. HTTP Code: $httpCode";
-}
 
 ?>
 
@@ -82,7 +49,7 @@ if ($httpCode == 200) {
     <input type="hidden" name="STAMP" value="<?php echo htmlspecialchars($stamp); ?>" />
     <input type="hidden" name="SITE" value="<?php echo htmlspecialchars($site); ?>" />
     <input type="hidden" name="AMOUNT" value="<?php echo htmlspecialchars($amount); ?>" />
-    <input type="hidden" name="FEE" value="<?php echo htmlspecialchars($fee); ?>" />
+    <input type="hidden" name="FEE" value="" />
     <input type="hidden" name="VAT_VALUE" value="<?php echo htmlspecialchars($vat_value); ?>" />
     <input type="hidden" name="REJECT" value="<?php echo htmlspecialchars($rejectUrl); ?>" />
     <input type="hidden" name="CANCEL" value="<?php echo htmlspecialchars($cancelUrl); ?>" />
