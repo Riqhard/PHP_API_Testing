@@ -8,7 +8,7 @@ $amount = "4.30";
 $fee = "5.00";
 $vat_value = "6.00";
 
-
+$stamp = hash("sha512", $stamp);
 
 // Replace these with actual values
 $secretKey = "1TRQVUMAUBX4";

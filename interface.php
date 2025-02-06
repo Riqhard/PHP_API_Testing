@@ -23,9 +23,9 @@ define("TESTING", true);
 if (TESTING) {
     define("MAC", "1TRQVUMAUBX4");
     define("SITE", "77190");
-    define("RETURN_URL", "http://localhost:8000/return.php");
-    define("CANCEL_URL", "http://localhost:8000/cancel.php");
-    define("REJECT_URL", "http://localhost:8000/reject.php");
+    define("RETURN_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
+    define("CANCEL_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
+    define("REJECT_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
 } else {
 
     # Load constants from environment variables
@@ -39,7 +39,6 @@ if (TESTING) {
 }
 
 # TODO:
-#   - Check number formats in form generation
 #   - Checker for responses
 #      + Check that response if from epassi, would be nice
 #   - In testing site, hash the stamp
