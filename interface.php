@@ -23,9 +23,9 @@ define("TESTING", true);
 if (TESTING) {
     define("MAC", "1TRQVUMAUBX4");
     define("SITE", "77190");
-    define("RETURN_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
-    define("CANCEL_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
-    define("REJECT_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
+    define("RETURN_URL", "http://localhost:8000/return.php");
+    define("CANCEL_URL", "http://localhost:8000/cancel.php");
+    define("REJECT_URL", "http://localhost:8000/reject.php");
 } else {
 
     # Load constants from environment variables
@@ -38,34 +38,68 @@ if (TESTING) {
     define("REJECT_URL", getenv("REJECT_URL"));
 }
 
+# TODO:
+#   - Check number formats in form generation
+#   - Checker for responses
+#      + Check that response if from epassi, would be nice
+#   - In testing site, hash the stamp
+#   - Test the interface to testing mode if testing environment variable is not set
+#
+# TO CONSIDER:
+#   - Does the form expose information that should not be shown publicly?
 
-# sha512 generator, returns hash
-function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") {
+function verifyNumberFormat($numb)
+{
+    return preg_match('/^\d+\.\d{2}?$/', $numb);
+}
+
+
+
+# sha512 generator, returns array [bool, hash]
+function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") 
+{
     $mac = MAC;
+
+    if (!verifyNumberFormat($amount)) {
+        return [false, null];
+    }
     if (!empty($fee) && !empty($vatValue)) {
-        return hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac");
+        if (!verifyNumberFormat($fee) || !verifyNumberFormat($vatValue)) {
+            return [false, null];
+        }
+        return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac")];
     } else if (!empty($fee)) {
-        return hash('sha512', "$stamp&$site&$amount&$fee&$mac");
+        if (!verifyNumberFormat($fee)) {
+            return [false, null];
+        }
+        return [true, hash('sha512', "$stamp&$site&$amount&$fee&$mac")];
     } else if (!empty($vatValue)) {
-        return hash('sha512', "$stamp&$site&$amount&$vatValue&$mac");
+        if (!verifyNumberFormat($vatValue)) {
+            return [false, null];
+        }
+        return [true, hash('sha512', "$stamp&$site&$amount&$vatValue&$mac")];
     } 
-  return hash('sha512', "$stamp&$site&$amount&$mac");
+
+    return [true, hash('sha512', "$stamp&$site&$amount&$mac")];
 } 
 
 
 # sha512 verifier, returns true or false
 # Note that MAC is the epassi secret key. sha512 should be what the API refers to as MAC. Not confusing at all...
-function verifySHA512($sha512, $stamp, $paid) {
+function verifySHA512($sha512, $stamp, $paid) 
+{
     $hash = hash('sha512', $stamp . $paid . MAC);
     if ($hash == $sha512) {
         return true;
     }
+
     return false;
 }
 
 
-# function to check if the payment was rejected or cancelled. Returns array [OK, stamp, error]
-function checkRejection($parameters) {
+# function to check if the payment was rejected or cancelled. Returns array [bool, stamp, error]
+function checkRejection($parameters) 
+{
     $error = "";
     $stamp = "";
     if (isset($parameters['stamp'])) {
@@ -76,12 +110,14 @@ function checkRejection($parameters) {
     } else {
         return [false, null, null];
     }
+
     return [true, $stamp, $error];
 }
 
 
-# function to check the error type. Returns [OK, error_description]
-function checkErrorType($error) {
+# function to check the error type. Returns [bool, error_description]
+function checkErrorType($error) 
+{
     if ($error == ERROR_INVALID_REQ) {
         return [true, ERROR_INVALID_REQ_TEXT];
     } else if ($error == ERROR_INVALID_SIGNATURE) {
@@ -89,37 +125,51 @@ function checkErrorType($error) {
     } else if ($error == ERROR_SITE_ERR) {
         return [true, ERROR_SITE_ERR_TEXT];
     }
+
     return [false, null];
 }
 
 
 # function to check if the error is valid. Returns true or false
-function isErrorValid($error) {
+function isErrorValid($error) 
+{
     if ($error == ERROR_INVALID_REQ || $error == ERROR_INVALID_SIGNATURE || $error == ERROR_SITE_ERR) {
         return true;
     }
+
     return false;
 }
 
 
 
-# function to generate the epassi HTML-form. Returns the form as a string
-function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) {
-    $form = "<form action='" . EPASSI_API_URL . "' method='post'>";
-    $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
-    $form .= "<input type='hidden' name='SITE' value='" . SITE . "'>";
-    $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
-    $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
-    $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
-    $form .= "<input type='hidden' name='REJECT' value='" . REJECT_URL . "'>";
-    $form .= "<input type='hidden' name='CANCEL' value='" . CANCEL_URL . "'>";
-    $form .= "<input type='hidden' name='RETURN' value='" . RETURN_URL . "'>";
-    $form .= "<input type='hidden' name='MAC' value='" . generateSHA512($stamp, SITE, $amount, $fee, $vatValue) . "'>";
-    $form .= "<input type='submit' value='" . $buttonText . "'>";
-    $form .= "</form>";
-    return $form;
+# function to generate the epassi HTML-form. Returns the array [bool, form]
+# TODO: Check number formats
+
+function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
+{
+    [$ok, $hash] = generateSHA512($stamp, SITE, $amount, $fee, $vatValue);
+
+    if ($ok) {
+        $form = "<form action='" . EPASSI_API_URL . "' method='post'>";
+        $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
+        $form .= "<input type='hidden' name='SITE' value='" . SITE . "'>";
+        $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
+        $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
+        $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
+        $form .= "<input type='hidden' name='REJECT' value='" . REJECT_URL . "'>";
+        $form .= "<input type='hidden' name='CANCEL' value='" . CANCEL_URL . "'>";
+        $form .= "<input type='hidden' name='RETURN' value='" . RETURN_URL . "'>";
+        $form .= "<input type='hidden' name='MAC' value='" . $hash . "'>";
+        $form .= "<input type='submit' value='" . $buttonText . "'>";
+        $form .= "</form>";
+
+        return [true, $form];
+    }
+
+    return [false, null];
+
+    
 }
 
 
 ?>
-
