@@ -16,8 +16,8 @@ define("ERROR_SITE_ERR_TEXT", "Provided site login is incorrect");
 
 define("PAY_BUTTON_TEXT", "Pay with Epassi");
 
-# Set the testing flag to true to use the test credentials
-define("TESTING", true);  
+# Try loading TESTING flag from enviroment variable. If not set, set to true
+define("TESTING", getenv("TESTING") ? getenv("TESTING") : true);  
 
 # Load secret key from environment variable
 if (TESTING) {
@@ -39,10 +39,7 @@ if (TESTING) {
 }
 
 # TODO:
-#   - Checker for responses
-#      + Check that response if from epassi, would be nice
-#   - In testing site, hash the stamp
-#   - Test the interface to testing mode if testing environment variable is not set
+
 #
 # TO CONSIDER:
 #   - Does the form expose information that should not be shown publicly?
@@ -50,6 +47,11 @@ if (TESTING) {
 function verifyNumberFormat($numb)
 {
     return preg_match('/^\d+\.\d{2}?$/', $numb);
+}
+
+function verifyVatFormat($vat)
+{
+    return preg_match('/^\d+\.\d{1}?$/', $vat);
 }
 
 
@@ -63,7 +65,7 @@ function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "")
         return [false, null];
     }
     if (!empty($fee) && !empty($vatValue)) {
-        if (!verifyNumberFormat($fee) || !verifyNumberFormat($vatValue)) {
+        if (!verifyNumberFormat($fee) || !verifyVatFormat($vatValue)) {
             return [false, null];
         }
         return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac")];
@@ -73,7 +75,7 @@ function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "")
         }
         return [true, hash('sha512', "$stamp&$site&$amount&$fee&$mac")];
     } else if (!empty($vatValue)) {
-        if (!verifyNumberFormat($vatValue)) {
+        if (!verifyVatFormat($vatValue)) {
             return [false, null];
         }
         return [true, hash('sha512', "$stamp&$site&$amount&$vatValue&$mac")];
@@ -93,6 +95,23 @@ function verifySHA512($sha512, $stamp, $paid)
     }
 
     return false;
+}
+
+
+# function to check if the response is valid. Arguments: POST parameters as array. Returns array [bool, stamp, paid]
+function verifyPaymentConfirmation($parameters)
+{
+    if (isset($parameters['STAMP']) && isset($parameters['PAID']) && isset($parameters['MAC'])) {
+        $stamp = $parameters['STAMP'];
+        $paid = $parameters['PAID'];
+        $mac = $parameters['MAC'];
+
+        if (verifySHA512($mac, $stamp, $paid)) {
+            return [true, $stamp, $paid];
+        }
+    }
+
+    return [false, null, null];
 }
 
 
@@ -140,7 +159,6 @@ function isErrorValid($error)
 }
 
 
-
 # function to generate the epassi HTML-form. Returns the array [bool, form]
 # TODO: Check number formats
 
@@ -169,6 +187,7 @@ function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonT
 
     
 }
+
 
 
 ?>
