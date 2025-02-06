@@ -43,8 +43,6 @@ if (TESTING) {
 function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") {
     $mac = MAC;
     if (!empty($fee) && !empty($vatValue)) {
-        echo "$stamp&$site&$amount&$fee&$vatValue&$mac";
-        echo "<br>";
         return hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac");
     } else if (!empty($fee)) {
         return hash('sha512', "$stamp&$site&$amount&$fee&$mac");
