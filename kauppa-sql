@@ -1,0 +1,122 @@
+CREATE DATABASE ticketizer;
+ 
+USE ticketizer;
+
+CREATE TABLE ticket_buyers (
+  `ticket_buyer_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'Primary Key',
+  `create_time` DATETIME DEFAULT NULL COMMENT 'Create Time',
+  `first_name` varchar(255) DEFAULT NULL COMMENT 'First Name',
+  `last_name` varchar(255) DEFAULT NULL COMMENT 'Last Name',
+  `address` varchar(255) DEFAULT NULL COMMENT 'Address',
+  `postal_code` varchar(10) DEFAULT NULL COMMENT 'Postal Code',
+  `city` varchar(255) DEFAULT NULL COMMENT 'City',
+  `email` varchar(255) NOT NULL UNIQUE KEY COMMENT 'Email Address',
+  `phone_number` varchar(20) DEFAULT NULL COMMENT 'Phone Number',
+  `birth_date` date DEFAULT NULL COMMENT 'Date of Birth',
+  `language` ENUM('en','fr','de','fi','sv') NOT NULL DEFAULT 'fi' COMMENT 'Preferred Language',
+  `encrypted_password` VARCHAR(255) NOT NULL COMMENT 'Encrypted Password',
+  `is_confirmed` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Confirmed',
+  `confirmation_code` varchar(255) DEFAULT NULL
+);
+
+
+CREATE TABLE `password_reset_tokens` (
+  `reset_token_id` int(11) AUTO_INCREMENT PRIMARY KEY,
+  `ticket_buyer_id` int(11) NOT NULL,
+  `reset_email` varchar(255) NOT NULL,
+  `reset_token` varchar(255) NOT NULL,
+  `create_time` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  FOREIGN KEY (`ticket_buyer_id`) REFERENCES `ticket_buyers` (`ticket_buyer_id`)
+);
+
+
+CREATE TABLE `ticket_buyer_statuses` (
+  `ticket_buyer_status_id` int(11) AUTO_INCREMENT PRIMARY KEY,
+  `ticket_buyer_id` int(11) NOT NULL,
+  `terms_accepted` tinyint(1) NOT NULL,
+  `newsletter` tinyint(1) NOT NULL,
+  `is_buyer` tinyint(1) NOT NULL DEFAULT '1',
+  `is_seller` tinyint(1) NOT NULL DEFAULT '0',
+  `is_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `is_superuser` tinyint(1) NOT NULL DEFAULT '0',
+  FOREIGN KEY (`ticket_buyer_id`) REFERENCES `ticket_buyers` (`ticket_buyer_id`)
+);
+
+
+CREATE TABLE shop_owners (
+  `shop_owner_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'Primary Key',
+  `create_time` DATETIME DEFAULT NULL COMMENT 'Create Time',
+  `first_name` varchar(255) DEFAULT NULL COMMENT 'First Name',
+  `last_name` varchar(255) DEFAULT NULL COMMENT 'Last Name',
+  `address` varchar(255) DEFAULT NULL COMMENT 'Address',
+  `postal_code` varchar(10) DEFAULT NULL COMMENT 'Postal Code',
+  `city` varchar(255) DEFAULT NULL COMMENT 'City',
+  `email` varchar(255) NOT NULL UNIQUE KEY COMMENT 'Email Address',
+  `phone_number` varchar(20) DEFAULT NULL COMMENT 'Phone Number',
+  `bank_account` varchar(34) DEFAULT NULL COMMENT 'Bank Account IBAN number',
+  `language` ENUM('en','fr','de','fi','sv') NOT NULL DEFAULT 'fi' COMMENT 'Preferred Language',
+  `terms_accepted` tinyint(1) NOT NULL,
+  `newsletter` tinyint(1) NOT NULL,
+  `encrypted_password` VARCHAR(255) NOT NULL COMMENT 'Encrypted Password',
+  `is_confirmed` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Confirmed',
+  `confirmation_code` varchar(255) DEFAULT NULL
+);
+
+
+CREATE TABLE `shop_owners_password_reset_tokens` (
+  `reset_token_id` int(11) AUTO_INCREMENT PRIMARY KEY,
+  `shop_owner_id` int(11) NOT NULL,
+  `reset_email` varchar(255) NOT NULL,
+  `reset_token` varchar(255) NOT NULL,
+  `create_time` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  FOREIGN KEY (`shop_owner_id`) REFERENCES `shop_owners` (`shop_owner_id`)
+);
+
+
+CREATE TABLE `products` (
+  `product_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `shop_owner_id` int(11) NOT NULL,
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the product was added',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the product was last updated',
+  `category` ENUM('fan_merch', 'food', 'beverages', 'lunch', 'other') NOT NULL COMMENT 'Product category',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Product name',
+  `description` TEXT DEFAULT NULL COMMENT 'Detailed description of the product',
+  `availability` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 if product is available, 0 if unavailable',
+  `price_excl_vat` DECIMAL(10, 2) NOT NULL COMMENT 'Price excluding VAT',
+  `vat_percentage` DECIMAL(5, 2) NOT NULL COMMENT 'VAT percentage',
+  `price_incl_vat` DECIMAL(10, 2) GENERATED ALWAYS AS (`price_excl_vat` * (1 + `vat_percentage` / 100)) STORED COMMENT 'Price including VAT',
+  FOREIGN KEY (`shop_owner_id`) REFERENCES `shop_owners` (`shop_owner_id`)
+);
+
+
+CREATE TABLE `event_organizers` (
+  `event_organizer_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY 
+);
+
+
+CREATE TABLE `events` (
+  `event_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `event_organizer_id` int(11) NOT NULL,
+  FOREIGN KEY (`event_organizer_id`) REFERENCES `event_organizers` (`event_organizer_id`)
+);
+
+
+CREATE TABLE `shops` (
+  `shop_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `shop_owner_id` int(11) NOT NULL,
+  `event_id` INT(11) NOT NULL COMMENT 'Foreign Key to event table',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the shop was created',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the shop was last updated',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Shop Name',
+  `description` TEXT DEFAULT NULL COMMENT 'Shop Description',
+  `purchase_opening_time` TIME DEFAULT NULL COMMENT 'Purchase opening time',
+  `purchase_closing_time` TIME DEFAULT NULL COMMENT 'Purchase closing time',
+  `delivery_opening_time` TIME DEFAULT NULL COMMENT 'Delivery opening time',
+  `delivery_closing_time` TIME DEFAULT NULL COMMENT 'Delivery closing time',
+  `table_service` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Shop table service availability',
+  `place_map` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Shop place map availability',
+  FOREIGN KEY (`shop_owner_id`) REFERENCES `shop_owners` (`shop_owner_id`),
+  FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`)
+);

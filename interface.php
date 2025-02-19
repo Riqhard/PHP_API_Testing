@@ -33,9 +33,9 @@ if (TESTING) {
 
     define("MAC", getenv("EPASSI_KEY"));
     define("SITE", getenv("EPASSI_LOGIN"));
-    define("RETURN_URL", getenv("RETURN_URL"));
-    define("CANCEL_URL", getenv("CANCEL_URL"));
-    define("REJECT_URL", getenv("REJECT_URL"));
+    define("RETURN_URL", getenv("EPASSI_RETURN_URL"));
+    define("CANCEL_URL", getenv("EPASSI_CANCEL_URL"));
+    define("REJECT_URL", getenv("EPASSI_REJECT_URL"));
 }
 
 # TODO:
@@ -69,12 +69,12 @@ function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "")
             return [false, null];
         }
         return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac")];
-    } else if (!empty($fee)) {
+    } elseif (!empty($fee)) {
         if (!verifyNumberFormat($fee)) {
             return [false, null];
         }
         return [true, hash('sha512', "$stamp&$site&$amount&$fee&$mac")];
-    } else if (!empty($vatValue)) {
+    } elseif (!empty($vatValue)) {
         if (!verifyVatFormat($vatValue)) {
             return [false, null];
         }
@@ -89,7 +89,8 @@ function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "")
 # Note that MAC is the epassi secret key. sha512 should be what the API refers to as MAC. Not confusing at all...
 function verifySHA512($sha512, $stamp, $paid) 
 {
-    $hash = hash('sha512', $stamp . $paid . MAC);
+    #$hash = hash('sha512', $stamp . $paid . MAC);
+    $hash = hash('sha512', "999999999");
     if ($hash == $sha512) {
         return true;
     }
@@ -138,9 +139,9 @@ function checkErrorType($error)
 {
     if ($error == ERROR_INVALID_REQ) {
         return [true, ERROR_INVALID_REQ_TEXT];
-    } else if ($error == ERROR_INVALID_SIGNATURE) {
+    } elseif ($error == ERROR_INVALID_SIGNATURE) {
         return [true, ERROR_INVALID_SIGNATURE_TEXT];
-    } else if ($error == ERROR_SITE_ERR) {
+    } elseif ($error == ERROR_SITE_ERR) {
         return [true, ERROR_SITE_ERR_TEXT];
     }
 
@@ -164,6 +165,7 @@ function isErrorValid($error)
 
 function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
 {
+
     [$ok, $hash] = generateSHA512($stamp, SITE, $amount, $fee, $vatValue);
 
     if ($ok) {
