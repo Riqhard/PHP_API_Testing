@@ -1,7 +1,6 @@
 <?php
 
-# Define constants
-define("EPASSI_API_URL", "https://prodstaging.Epassi.fi/e_payments/v2");
+# Constants and loading configuration from environment variables
 
 # API payment rejection errors
 define("ERROR_INVALID_REQ", "INVALID_REQUEST");
@@ -13,183 +12,193 @@ define("ERROR_SITE_ERR", "SITE_DOES_NOT_EXIST");
 define("ERROR_INVALID_REQ_TEXT", "Rejected: Malformed payment form");
 define("ERROR_INVALID_SIGNATURE_TEXT", "MAC signature is invalid");
 define("ERROR_SITE_ERR_TEXT", "Provided site login is incorrect");
-
 define("PAY_BUTTON_TEXT", "Pay with Epassi");
 
-# Try loading TESTING flag from enviroment variable. If not set, set to true
-define("TESTING", getenv("TESTING") ? getenv("TESTING") : true);  
 
-# Load secret key from environment variable
-if (TESTING) {
-    define("MAC", "1TRQVUMAUBX4");
-    define("SITE", "77190");
-    define("RETURN_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
-    define("CANCEL_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
-    define("REJECT_URL", "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php");
-} else {
 
-    # Load constants from environment variables
-    # NOTE: EPASSI_KEY and EPASSI_LOGIN might need renaming for clarity
+##### Epassi functions. ######
+# In general, if these functions return a boolean as the first element of the array, it indicates if the operation was successful or not.
+# Rest of the return values are the results of the operation, if any.
 
-    define("MAC", getenv("EPASSI_KEY"));
-    define("SITE", getenv("EPASSI_LOGIN"));
-    define("RETURN_URL", getenv("EPASSI_RETURN_URL"));
-    define("CANCEL_URL", getenv("EPASSI_CANCEL_URL"));
-    define("REJECT_URL", getenv("EPASSI_REJECT_URL"));
-}
-
-# TODO:
-
-#
-# TO CONSIDER:
-#   - Does the form expose information that should not be shown publicly?
-
-function verifyNumberFormat($numb)
+class EpassiInterface 
 {
-    return preg_match('/^\d+\.\d{2}?$/', $numb);
-}
+    private $mac;
+    private $site;
+    private $returnUrl;
+    private $cancelUrl;
+    private $rejectUrl;
+    private $epassiApiUrl;
 
-function verifyVatFormat($vat)
-{
-    return preg_match('/^\d+\.\d{1}?$/', $vat);
-}
-
-
-
-# sha512 generator, returns array [bool, hash]
-function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") 
-{
-    $mac = MAC;
-
-    if (!verifyNumberFormat($amount)) {
-        return [false, null];
+    public function __construct(
+        $epassiLogin,
+        $epassiKey,  
+        $returnUrl, 
+        $cancelUrl, 
+        $rejectUrl, 
+        $epassiApiUrl,
+        $testing = false
+    ) 
+    {
+        $this->mac = $epassiKey;
+        $this->site = $epassiLogin;
+        $this->returnUrl = $returnUrl;
+        $this->cancelUrl = $cancelUrl;
+        $this->rejectUrl = $rejectUrl;
+        $this->epassiApiUrl = $epassiApiUrl;   
+        if ($testing) {
+            $this->mac = "1TRQVUMAUBX4";
+            $this->site = "77190";
+        }
     }
-    if (!empty($fee) && !empty($vatValue)) {
-        if (!verifyNumberFormat($fee) || !verifyVatFormat($vatValue)) {
+
+
+    # Functions to verify the number and vat formats. Returns true or false depending on if the format is correct
+    private function verifyNumberFormat($numb)
+    {
+        return preg_match('/^\d+\.\d{2}?$/', $numb);
+    }
+
+    private function verifyVatFormat($vat)
+    {
+        return preg_match('/^\d+\.\d{1}?$/', $vat);
+    }
+
+
+
+    # sha512 generator, returns array [bool, hash].
+    private function generateSHA512($stamp, $site, $amount, $fee = "", $vatValue = "") 
+    {
+        
+        if (!$this->verifyNumberFormat($amount)) {
+            echo "$this->mac 1";
             return [false, null];
         }
-        return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$mac")];
-    } elseif (!empty($fee)) {
-        if (!verifyNumberFormat($fee)) {
-            return [false, null];
-        }
-        return [true, hash('sha512', "$stamp&$site&$amount&$fee&$mac")];
-    } elseif (!empty($vatValue)) {
-        if (!verifyVatFormat($vatValue)) {
-            return [false, null];
-        }
-        return [true, hash('sha512', "$stamp&$site&$amount&$vatValue&$mac")];
+        if (!empty($fee) && !empty($vatValue)) {
+            if (!$this->verifyNumberFormat($fee) || !$this->verifyVatFormat($vatValue)) {
+                
+                return [false, null];
+            }
+            return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$this->mac")];
+        } elseif (!empty($fee)) {
+            if (!$this->verifyNumberFormat($fee)) {
+                echo "$this->mac 4";
+                return [false, null];
+            }
+            return [true, hash('sha512', "$stamp&$site&$amount&$fee&$this->mac")];
+        } elseif (!empty($vatValue)) {
+            if (!$this->verifyVatFormat($vatValue)) {
+                echo "$this->mac 5";
+                return [false, null];
+            }
+            return [true, hash('sha512', "$stamp&$site&$amount&$vatValue&$this->mac")];
+        } 
+        echo "$this->mac last";
+        return [true, hash('sha512', "$stamp&$site&$amount&$this->mac")];
     } 
 
-    return [true, hash('sha512', "$stamp&$site&$amount&$mac")];
-} 
 
+    # sha512 verifier, returns true or false, depending on if the hash is correct
+    # Note that MAC is the epassi secret key. Functionally, sha512 should be what the API refers to as MAC. Not confusing at all...
+    private function verifySHA512($sha512, $stamp, $paid) 
+    {
+        $hash = hash('sha512', $stamp . $paid . MAC);
+        if ($hash == $sha512) {
+            return true;
+        }
 
-# sha512 verifier, returns true or false
-# Note that MAC is the epassi secret key. sha512 should be what the API refers to as MAC. Not confusing at all...
-function verifySHA512($sha512, $stamp, $paid) 
-{
-    #$hash = hash('sha512', $stamp . $paid . MAC);
-    $hash = hash('sha512', "999999999");
-    if ($hash == $sha512) {
-        return true;
+        return false;
     }
 
-    return false;
-}
 
+    # function to check if the response is valid. Arguments: POST parameters as array. Returns array [bool, stamp, paid]
+    public function verifyPaymentConfirmation($parameters)
+    {
+        if (isset($parameters['STAMP']) && isset($parameters['PAID']) && isset($parameters['MAC'])) {
+            $stamp = $parameters['STAMP'];
+            $paid = $parameters['PAID'];
+            $mac = $parameters['MAC'];
 
-# function to check if the response is valid. Arguments: POST parameters as array. Returns array [bool, stamp, paid]
-function verifyPaymentConfirmation($parameters)
-{
-    if (isset($parameters['STAMP']) && isset($parameters['PAID']) && isset($parameters['MAC'])) {
-        $stamp = $parameters['STAMP'];
-        $paid = $parameters['PAID'];
-        $mac = $parameters['MAC'];
-
-        if (verifySHA512($mac, $stamp, $paid)) {
-            return [true, $stamp, $paid];
+            if ($this->verifySHA512($mac, $stamp, $paid)) {
+                return [true, $stamp, $paid];
+            }
         }
-    }
 
-    return [false, null, null];
-}
-
-
-# function to check if the payment was rejected or cancelled. Returns array [bool, stamp, error]
-function checkRejection($parameters) 
-{
-    $error = "";
-    $stamp = "";
-    if (isset($parameters['stamp'])) {
-        $stamp = $parameters['stamp'];
-        if (isset($parameters['error'])) {
-            $error = $parameters['error'];
-        }
-    } else {
         return [false, null, null];
     }
 
-    return [true, $stamp, $error];
-}
 
+    # function to check if the payment was rejected or cancelled. Returns array [bool, stamp, error], where bool indicates if the response was valid
+    public function checkRejection($parameters) 
+    {
+        $error = "";
+        $stamp = "";
+        if (isset($parameters['stamp'])) {
+            $stamp = $parameters['stamp'];
+            if (isset($parameters['error'])) {
+                $error = $parameters['error'];
+            }
+        } else {
+            return [false, null, null];
+        }
 
-# function to check the error type. Returns [bool, error_description]
-function checkErrorType($error) 
-{
-    if ($error == ERROR_INVALID_REQ) {
-        return [true, ERROR_INVALID_REQ_TEXT];
-    } elseif ($error == ERROR_INVALID_SIGNATURE) {
-        return [true, ERROR_INVALID_SIGNATURE_TEXT];
-    } elseif ($error == ERROR_SITE_ERR) {
-        return [true, ERROR_SITE_ERR_TEXT];
+        return [true, $stamp, $error];
     }
 
-    return [false, null];
-}
 
-
-# function to check if the error is valid. Returns true or false
-function isErrorValid($error) 
-{
-    if ($error == ERROR_INVALID_REQ || $error == ERROR_INVALID_SIGNATURE || $error == ERROR_SITE_ERR) {
-        return true;
+    # function to check the error type. Returns [bool, error_description]
+    public function checkErrorType($error) 
+    {
+        switch ($error) {
+            case ERROR_INVALID_REQ:
+                return [true, ERROR_INVALID_REQ_TEXT];
+            case ERROR_INVALID_SIGNATURE:
+                return [true, ERROR_INVALID_SIGNATURE_TEXT];
+            case ERROR_SITE_ERR:
+                return [true, ERROR_SITE_ERR_TEXT];
+            default:
+                return [false, null];
+        }
     }
 
-    return false;
-}
 
+    # function to check if the error is valid. Returns true or false
+    public function isErrorValid($error) 
+    {
+        if ($error == ERROR_INVALID_REQ || $error == ERROR_INVALID_SIGNATURE || $error == ERROR_SITE_ERR) {
+            return true;
+        }
 
-# function to generate the epassi HTML-form. Returns the array [bool, form]
-# TODO: Check number formats
-
-function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
-{
-
-    [$ok, $hash] = generateSHA512($stamp, SITE, $amount, $fee, $vatValue);
-
-    if ($ok) {
-        $form = "<form action='" . EPASSI_API_URL . "' method='post'>";
-        $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
-        $form .= "<input type='hidden' name='SITE' value='" . SITE . "'>";
-        $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
-        $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
-        $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
-        $form .= "<input type='hidden' name='REJECT' value='" . REJECT_URL . "'>";
-        $form .= "<input type='hidden' name='CANCEL' value='" . CANCEL_URL . "'>";
-        $form .= "<input type='hidden' name='RETURN' value='" . RETURN_URL . "'>";
-        $form .= "<input type='hidden' name='MAC' value='" . $hash . "'>";
-        $form .= "<input type='submit' value='" . $buttonText . "'>";
-        $form .= "</form>";
-
-        return [true, $form];
+        return false;
     }
 
-    return [false, null];
 
-    
+    # function to generate the epassi HTML-form. Returns the array [bool, form]
+
+    public function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
+    {
+        [$ok, $hash] = $this->generateSHA512($stamp, $this->site, $amount, $fee, $vatValue);
+        
+
+        if ($ok) {
+            $form = "<form action='" . $this->epassiApiUrl . "' method='post'>";
+            $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
+            $form .= "<input type='hidden' name='SITE' value='" . $this->site . "'>";
+            $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
+            $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
+            $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
+            $form .= "<input type='hidden' name='REJECT' value='" . $this->rejectUrl . "'>";
+            $form .= "<input type='hidden' name='CANCEL' value='" . $this->cancelUrl . "'>";
+            $form .= "<input type='hidden' name='RETURN' value='" . $this->returnUrl . "'>";
+            $form .= "<input type='hidden' name='MAC' value='" . $hash . "'>";
+            $form .= "<input type='submit' value='" . $buttonText . "'>";
+            $form .= "</form>";
+
+            return [true, $form];
+        }
+
+        return [false, null];
+
+        
+    }
 }
-
-
-
 ?>

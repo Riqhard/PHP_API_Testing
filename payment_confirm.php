@@ -1,3 +1,17 @@
+<?php
+include 'interface.php';
+
+
+
+$secretKey = "1TRQVUMAUBX4";
+$returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
+$rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
+$cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
+
+
+$epassi = new EpassiInterface("login", "key", $returnUrl, $cancelUrl, $rejectUrl, "https://prodstaging.Epassi.fi/e_payments/v2", True);
+
+?>
 
 
 <html>

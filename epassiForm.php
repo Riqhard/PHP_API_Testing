@@ -26,17 +26,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stamp = rand(1000, 65535);
     $amount = "0.00";
     $fee = "0.00";
-    $vat_value = "6.00";
+    $vat_value = "6.0";
     $total = 0;
 }
 
-generateEpassiForm($stamp, $amount, $fee, $vat_value);
+
 // Replace these with actual values
 $secretKey = "1TRQVUMAUBX4";
 $returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
- 
+
+
+$epassi = new EpassiInterface("login", "key", $returnUrl, $cancelUrl, $rejectUrl, "https://prodstaging.Epassi.fi/e_payments/v2", True);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -82,7 +85,7 @@ $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.ne
         <h2>Epassi Payment</h2>
         <p>Please review the payment details below and click "Pay with Epassi" to proceed.</p>
         <?php 
-        [$ok, $form] = generateEpassiForm($stamp, $amount, $fee, $vat_value);
+        [$ok, $form] = $epassi->generateEpassiForm($stamp, $amount, $fee, $vat_value);
         if ($ok) {
             echo $form;
         } else {
