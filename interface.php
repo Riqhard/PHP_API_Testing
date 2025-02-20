@@ -70,7 +70,6 @@ class EpassiGenerator
     {
         
         if (!$this->verifyNumberFormat($amount)) {
-            echo "$this->mac 1";
             return [false, null];
         }
         if (!empty($fee) && !empty($vatValue)) {
@@ -81,18 +80,15 @@ class EpassiGenerator
             return [true, hash('sha512', "$stamp&$site&$amount&$fee&$vatValue&$this->mac")];
         } elseif (!empty($fee)) {
             if (!$this->verifyNumberFormat($fee)) {
-                echo "$this->mac 4";
                 return [false, null];
             }
             return [true, hash('sha512', "$stamp&$site&$amount&$fee&$this->mac")];
         } elseif (!empty($vatValue)) {
             if (!$this->verifyVatFormat($vatValue)) {
-                echo "$this->mac 5";
                 return [false, null];
             }
             return [true, hash('sha512', "$stamp&$site&$amount&$vatValue&$this->mac")];
         } 
-        echo "$this->mac last";
         return [true, hash('sha512', "$stamp&$site&$amount&$this->mac")];
     } 
 

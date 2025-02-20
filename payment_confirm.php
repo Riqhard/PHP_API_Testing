@@ -23,17 +23,25 @@ $epassi = new EpassiVerifier("key", True);
   <h1>epassi response tester</h1>
  
   <?php
+
   if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    echo "You got Post<br>";
     [$ok, $stamp, $paid] = $epassi->verifyPaymentConfirmation($_POST);
+    echo "You got Verified<br>";
     if ($ok) {
       echo "Payment confirmation received<br>";
       echo "Confirmation contents: <br><hr>";
       echo "STAMP: " . $stamp . "<br>";
       echo "PAID: " . $paid . "<br>";
       echo "MAC: " . $_POST['MAC'] . "<hr>";
+    }else{
+      echo "Invalid<br>";
     }
   }elseif($_SERVER['REQUEST_METHOD'] == 'GET'){
+    
+    echo "You got Get<br>";
     [$ok, $stamp, $error]= $epassi->checkRejection($_GET);
+    echo "You got Rejected<br>";
     if ($ok) {
       echo "Contents: <br><hr>";
       echo "STAMP: " . $stamp . "<br>";
