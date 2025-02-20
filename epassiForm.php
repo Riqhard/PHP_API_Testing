@@ -38,7 +38,7 @@ $rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.ne
 $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 
 
-$epassi = new EpassiInterface("login", "key", $returnUrl, $cancelUrl, $rejectUrl, "https://prodstaging.Epassi.fi/e_payments/v2", True);
+$epassi = new EpassiGenerator("login", "key", $returnUrl, $cancelUrl, $rejectUrl, "https://prodstaging.Epassi.fi/e_payments/v2", True);
 
 ?>
 <!DOCTYPE html>

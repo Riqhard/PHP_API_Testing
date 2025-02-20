@@ -20,7 +20,7 @@ define("PAY_BUTTON_TEXT", "Pay with Epassi");
 # In general, if these functions return a boolean as the first element of the array, it indicates if the operation was successful or not.
 # Rest of the return values are the results of the operation, if any.
 
-class EpassiInterface 
+class EpassiGenerator 
 {
     private $mac;
     private $site;
@@ -97,11 +97,59 @@ class EpassiInterface
     } 
 
 
+    # function to generate the epassi HTML-form. Returns the array [bool, form]
+
+    public function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
+    {
+        [$ok, $hash] = $this->generateSHA512($stamp, $this->site, $amount, $fee, $vatValue);
+
+        if ($ok) {
+            $form = "<form action='" . $this->epassiApiUrl . "' method='post'>";
+            $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
+            $form .= "<input type='hidden' name='SITE' value='" . $this->site . "'>";
+            $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
+            $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
+            $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
+            $form .= "<input type='hidden' name='REJECT' value='" . $this->rejectUrl . "'>";
+            $form .= "<input type='hidden' name='CANCEL' value='" . $this->cancelUrl . "'>";
+            $form .= "<input type='hidden' name='RETURN' value='" . $this->returnUrl . "'>";
+            $form .= "<input type='hidden' name='MAC' value='" . $hash . "'>";
+            $form .= "<input type='submit' value='" . $buttonText . "'>";
+            $form .= "</form>";
+
+            return [true, $form];
+        }
+
+        return [false, null];
+
+        
+    }
+  }
+
+
+
+class EpassiVerifier 
+{
+    private $mac;
+    private $site;
+
+    public function __construct(
+        $epassiKey, 
+        $testing = false
+    ) 
+    {
+        $this->mac = $epassiKey;
+        if ($testing) {
+            $this->mac = "1TRQVUMAUBX4";
+        }
+    }
+
+
     # sha512 verifier, returns true or false, depending on if the hash is correct
     # Note that MAC is the epassi secret key. Functionally, sha512 should be what the API refers to as MAC. Not confusing at all...
     private function verifySHA512($sha512, $stamp, $paid) 
     {
-        $hash = hash('sha512', $stamp . $paid . MAC);
+        $hash = hash('sha512', $stamp . $paid . $this->mac);
         if ($hash == $sha512) {
             return true;
         }
@@ -171,34 +219,5 @@ class EpassiInterface
         return false;
     }
 
-
-    # function to generate the epassi HTML-form. Returns the array [bool, form]
-
-    public function generateEpassiForm($stamp, $amount, $fee = "", $vatValue = "", $buttonText = PAY_BUTTON_TEXT) 
-    {
-        [$ok, $hash] = $this->generateSHA512($stamp, $this->site, $amount, $fee, $vatValue);
-        
-
-        if ($ok) {
-            $form = "<form action='" . $this->epassiApiUrl . "' method='post'>";
-            $form .= "<input type='hidden' name='STAMP' value='" . $stamp . "'>";
-            $form .= "<input type='hidden' name='SITE' value='" . $this->site . "'>";
-            $form .= "<input type='hidden' name='AMOUNT' value='" . $amount . "'>";
-            $form .= "<input type='hidden' name='FEE' value='" . $fee . "'>";               # If fee is empty, should the field be included?
-            $form .= "<input type='hidden' name='VAT_VALUE' value='" . $vatValue . "'>";    # If vatValue is empty, should the field be included?
-            $form .= "<input type='hidden' name='REJECT' value='" . $this->rejectUrl . "'>";
-            $form .= "<input type='hidden' name='CANCEL' value='" . $this->cancelUrl . "'>";
-            $form .= "<input type='hidden' name='RETURN' value='" . $this->returnUrl . "'>";
-            $form .= "<input type='hidden' name='MAC' value='" . $hash . "'>";
-            $form .= "<input type='submit' value='" . $buttonText . "'>";
-            $form .= "</form>";
-
-            return [true, $form];
-        }
-
-        return [false, null];
-
-        
-    }
 }
 ?>
