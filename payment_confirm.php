@@ -43,17 +43,17 @@ $epassi = new EpassiVerifier("key", True);
     [$ok, $stamp, $error]= $epassi->checkRejection($_GET);
     echo "You got Rejected<br>";
     if ($ok) {
-      echo "Contents: <br><hr>";
+      echo "<b>Contents: <br><hr>";
       echo "STAMP: " . $stamp . "<br>";
-      echo "Error: " . $error . "<hr>";
+      echo "Error: " . $error . "<hr></b>";
     }else{
       echo "Invalid<br>";
     }
   }
-  echo "Stamp: <br><hr>";
-  echo "MAC: " . $_POST['MAC'] . "<hr>";
-  echo "PAID: " . $_POST['PAID'] . "<hr>";
-  echo "STAMP: " . $_POST['STAMP'] . "<hr>";
+  echo "<i>POST contents<hr>";
+  echo "MAC: " . $_POST['MAC'] . "<br>";
+  echo "PAID: " . $_POST['PAID'] . "<br>";
+  echo "STAMP: " . $_POST['STAMP'] . "<br></i>";
 ?>
  
 Form for testing the response handling:

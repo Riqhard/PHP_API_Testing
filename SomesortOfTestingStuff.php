@@ -164,4 +164,11 @@ function insertMaksettuLippu($orderNumber, $authCode, $returnCode, $settled) {
 
 </body>
 
+MAC: 6c99791279cce1f414e4fcc417631cd1fc0f868092807cb5a370807d10dbc2821da64fccb35e116d3aa960656899c6f815345ba605f462aa887f4f60a51120d2
+
+MAC: 0bc3c6f7655d3de3b6a342b07234e64a1919a2927e01d5c4a9167d60c121760ab3e1e1c3b5a3cdc522ea667dc1117cee9fc8dda5d37c5538be4a58c799047c69
+PAID: 100842532
+STAMP: 18889
+
+
 </html>
