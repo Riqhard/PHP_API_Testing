@@ -127,7 +127,6 @@ class EpassiGenerator
 class EpassiVerifier 
 {
     private $mac;
-    private $site;
 
     public function __construct(
         $epassiKey, 
@@ -143,9 +142,10 @@ class EpassiVerifier
 
     # sha512 verifier, returns true or false, depending on if the hash is correct
     # Note that MAC is the epassi secret key. Functionally, sha512 should be what the API refers to as MAC. Not confusing at all...
+    # SHA512 structure: stamp&paid&mac
     private function verifySHA512($sha512, $stamp, $paid) 
     {
-        $hash = hash('sha512', $stamp . $paid . $this->mac);
+        $hash = hash('sha512', $stamp . "&" . $paid . "&" . $this->mac);
         if ($hash == $sha512) {
             return true;
         }
