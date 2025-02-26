@@ -23,6 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo $paymentID;
     }
 
+}elseif ($_SERVER["REQUEST_METHOD"] == "GET") {
+    [$ok, $paymentID, $error] = $paymentProcessor->processPayment;
 }
 
 ?>
