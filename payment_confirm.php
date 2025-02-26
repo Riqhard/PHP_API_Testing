@@ -1,5 +1,6 @@
 <?php
 include 'interface.php';
+include_once "payment_system/payments.php";
 
 
 
@@ -10,6 +11,19 @@ $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.ne
 
 
 $epassi = new EpassiVerifier("key", True);
+$paymentProcessor = new PaymentProcessor($mysqli, "", "", "Button Text", $returnUrl, $rejectUrl, $cancelUrl);
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    [$ok, $paymentID, $error] = $paymentProcessor->processPayment("epassi", $_POST, "POST");
+    if ($error){
+        echo "<br>error: ";
+        echo $error;
+    }else{
+        echo "<br>paymentID: ";
+        echo $paymentID;
+    }
+
+}
 
 ?>
 
@@ -24,36 +38,7 @@ $epassi = new EpassiVerifier("key", True);
  
   <?php
 
-  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    echo "You got Post<br>";
-    [$ok, $stamp, $paid] = $epassi->verifyPaymentConfirmation($_POST);
-    echo "You got Verified<br>";
-    if ($ok) {
-      echo "Payment confirmation received<br>";
-      echo "Confirmation contents: <br><hr>";
-      echo "STAMP: " . $stamp . "<br>";
-      echo "PAID: " . $paid . "<br>";
-      echo "MAC: " . $_POST['MAC'] . "<hr>";
-    }else{
-      echo "Invalid<br>";
-    }
-  }elseif($_SERVER['REQUEST_METHOD'] == 'GET'){
-    
-    echo "You got Get<br>";
-    [$ok, $stamp, $error]= $epassi->checkRejection($_GET);
-    echo "You got Rejected<br>";
-    if ($ok) {
-      echo "<b>Contents: <br><hr>";
-      echo "STAMP: " . $stamp . "<br>";
-      echo "Error: " . $error . "<hr></b>";
-    }else{
-      echo "Invalid<br>";
-    }
-  }
-  echo "<i>POST contents<hr>";
-  echo "MAC: " . $_POST['MAC'] . "<br>";
-  echo "PAID: " . $_POST['PAID'] . "<br>";
-  echo "STAMP: " . $_POST['STAMP'] . "<br></i>";
+  
 ?>
  
 Form for testing the response handling:
