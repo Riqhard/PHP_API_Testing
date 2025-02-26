@@ -1,5 +1,4 @@
 <?php
-include 'interface.php';
 include_once "payment_system/payments.php";
 
 
@@ -9,24 +8,11 @@ $returnUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.ne
 $rejectUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 $cancelUrl = "https://kilpimaari-htc3def2dpckc4ht.westeurope-01.azurewebsites.net/payment_confirm.php";
 
-
-$epassi = new EpassiVerifier("key", True);
-$paymentProcessor = new PaymentProcessor($mysqli, "", "", "Button Text", $returnUrl, $rejectUrl, $cancelUrl);
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    [$ok, $paymentID, $error] = $paymentProcessor->processPayment("epassi", $_POST, "POST");
-    if ($error){
-        echo "<br>error: ";
-        echo $error;
-    }else{
-        echo "<br>paymentID: ";
-        echo $paymentID;
-    }
-
+if ($_SERVER["REQUEST_METHOD"] == "POST") {  
+  echo var_dump($_POST);
 }elseif ($_SERVER["REQUEST_METHOD"] == "GET") {
-    [$ok, $paymentID, $error] = $paymentProcessor->processPayment;
+  echo var_dump($_GET);
 }
-
 ?>
 
 
