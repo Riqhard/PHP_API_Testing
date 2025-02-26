@@ -1,6 +1,6 @@
 <?php
 include 'interface.php';
-include_once "payment_system/payments.php";
+//include_once "payment_system/payments.php";
 
 
 
