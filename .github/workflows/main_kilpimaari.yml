@@ -65,4 +65,4 @@ jobs:
           app-name: 'kilpimaari'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BB9B8DA903C2415A903F6FC871E70260 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_1A7DCA4A742E4828AB0251E757446641 }}
